@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 수업
+model Class {
+  id String @id @default(cuid())
+  name String
+  createdAt DateTime @default(now())
+  
+  critiquePractices CritiquePractice[]
+  groupTopics GroupTopic[]
+  podcastPosts PodcastPost[]
+  
+  @@map("classes")
+}
+
+// 미디어 비평 연습 (개인)
+model CritiquePractice {
+  id String @id @default(cuid())
+  classId String
+  studentNumber String
+  studentName String
+  activityName String
+  mediaType String // "video" or "image"
+  mediaUrl String
+  critiqueText String @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  @@map("critique_practices")
+}
+
+// 모둠 주제 (그룹 비평 실전)
+model GroupTopic {
+  id String @id @default(cuid())
+  classId String
+  groupName String
+  mainTopic String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  branchItems BranchItem[]
+  
+  @@map("group_topics")
+}
+
+// 가지 항목 (모둠 주제에 속하는 개별 항목)
+model BranchItem {
+  id String @id @default(cuid())
+  groupTopicId String
+  title String
+  mediaType String // "video" or "image"
+  mediaUrl String
+  critiqueText String @db.Text
+  authorName String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  groupTopic GroupTopic @relation(fields: [groupTopicId], references: [id], onDelete: Cascade)
+  
+  @@map("branch_items")
+}
+
+// 팟캐스트 게시물
+model PodcastPost {
+  id String @id @default(cuid())
+  classId String
+  groupName String
+  title String
+  coverImageUrl String
+  introduction String @db.Text
+  scriptTextOrUrl String @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  
+  @@map("podcast_posts")
+}
+
+// 댓글 (팟캐스트 게시물의 댓글)
+model Comment {
+  id String @id @default(cuid())
+  podcastPostId String
+  studentNumber String
+  studentName String
+  content String @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  podcastPost PodcastPost @relation(fields: [podcastPostId], references: [id], onDelete: Cascade)
+  replies Reply[]
+  
+  @@map("comments")
+}
+
+// 답글 (댓글의 답글)
+model Reply {
+  id String @id @default(cuid())
+  commentId String
+  responderName String
+  content String @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  @@map("replies")
+}
